@@ -4,7 +4,7 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(env_file_encoding="utf-8", extra="ignore")
 
     # Environment
     environment: str = "development"
@@ -12,6 +12,16 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = "postgresql+asyncpg://gateway:gateway_dev@localhost:5432/infermind"
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _fix_asyncpg_url(cls, v: str) -> str:
+        """Convert postgres:// (Railway) → postgresql+asyncpg:// (asyncpg)."""
+        if "asyncpg" not in v:
+            v = v.replace("postgresql://", "postgresql+asyncpg://").replace(
+                "postgres://", "postgresql+asyncpg://"
+            )
+        return v
 
     # Redis
     redis_url: str = "redis://localhost:6379"

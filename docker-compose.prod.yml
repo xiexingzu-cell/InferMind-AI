@@ -1,0 +1,134 @@
+# ============================================================
+# InferMind — 单服务器 Docker Compose 生产部署
+# ============================================================
+#
+# 启动命令:
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+#
+# 查看状态:
+#   docker compose -f docker-compose.prod.yml ps
+#
+# 查看日志:
+#   docker compose -f docker-compose.prod.yml logs -f
+#
+# 停止:
+#   docker compose -f docker-compose.prod.yml down
+# ============================================================
+
+services:
+  # ===================== Nginx =====================
+  nginx:
+    build:
+      context: ./nginx
+    container_name: infermind-nginx
+    ports:
+      - "80:80"
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_healthy
+    networks:
+      - infermind-net
+    restart: unless-stopped
+
+  # ===================== Frontend =====================
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+        NEXT_PUBLIC_INTERNAL_API_KEY: ${INTERNAL_API_KEY:-gw-dev-internal-key}
+    container_name: infermind-frontend
+    expose:
+      - "3000"
+    networks:
+      - infermind-net
+    restart: unless-stopped
+
+  # ===================== Backend =====================
+  backend:
+    build:
+      context: ./backend
+    container_name: infermind-backend
+    expose:
+      - "8000"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-gw-dev-internal-key}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - RATE_LIMIT_RPM=${RATE_LIMIT_RPM:-60}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - infermind-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ===================== PostgreSQL =====================
+  postgres:
+    image: postgres:16-alpine
+    container_name: infermind-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    expose:
+      - "5432"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    networks:
+      - infermind-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ===================== Redis =====================
+  redis:
+    image: redis:7-alpine
+    container_name: infermind-redis
+    command: redis-server --appendonly yes
+    expose:
+      - "6379"
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - infermind-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+# ===================== Volumes =====================
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+
+# ===================== Network =====================
+networks:
+  infermind-net:
+    driver: bridge
