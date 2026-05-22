@@ -25,8 +25,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="AI Gateway",
-    description="OpenAI-compatible AI aggregation gateway.",
+    title="InferMind",
+    description="OpenAI-compatible multi-model inference platform.",
     version="0.1.0",
     lifespan=lifespan,
     docs_url="/docs",

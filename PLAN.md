@@ -1,4 +1,4 @@
-# Plan: AI Gateway
+# Plan: InferMind
 
 ## Objective
 Build a production-grade AI aggregation platform with an OpenAI-compatible API endpoint and a geek-style dark-mode chat UI. Supports OpenAI GPT, Google Gemini, and DeepSeek out of the box, with a pluggable provider architecture for future expansion.

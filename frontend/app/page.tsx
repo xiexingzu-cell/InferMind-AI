@@ -50,7 +50,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto h-full px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Terminal className="w-4 h-4 text-primary" />
-            <span className="font-semibold tracking-tight">AI Gateway</span>
+            <span className="font-semibold tracking-tight">InferMind</span>
           </div>
           <div className="flex items-center gap-6">
             <Link
@@ -167,7 +167,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-border/50 py-6 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-muted-foreground">
-          <span className="font-mono">AI Gateway v0.1</span>
+          <span className="font-mono">InferMind v0.1</span>
           <span>基于 FastAPI + Next.js 构建</span>
         </div>
       </footer>

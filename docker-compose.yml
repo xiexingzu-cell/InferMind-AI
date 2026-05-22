@@ -1,24 +1,24 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: ai-gateway-postgres
+    container_name: infermind-postgres
     environment:
       POSTGRES_USER: gateway
       POSTGRES_PASSWORD: gateway_dev
-      POSTGRES_DB: ai_gateway
+      POSTGRES_DB: infermind
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gateway -d ai_gateway"]
+      test: ["CMD-SHELL", "pg_isready -U gateway -d infermind"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: ai-gateway-redis
+    container_name: infermind-redis
     command: redis-server --appendonly yes
     ports:
       - "6379:6379"

@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # Database
-    database_url: str = "postgresql+asyncpg://gateway:gateway_dev@localhost:5432/ai_gateway"
+    database_url: str = "postgresql+asyncpg://gateway:gateway_dev@localhost:5432/infermind"
 
     # Redis
     redis_url: str = "redis://localhost:6379"

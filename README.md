@@ -1,4 +1,4 @@
-# AI Gateway
+# InferMind
 
 OpenAI-compatible AI aggregation gateway. Route requests to GPT, DeepSeek, and Gemini through a single API endpoint.
 
