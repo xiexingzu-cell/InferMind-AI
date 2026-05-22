@@ -10,7 +10,55 @@
 | 硬盘 | 20 GB |
 | 网络 | 公网 IP，开放 80 端口（防火墙/安全组） |
 
-## 2. 安装 Docker
+## 2. 服务器初始化：国内镜像加速
+
+部署前先配置国内镜像源，大幅提升构建和下载速度。
+
+### 2.1 apt 源（腾讯云）
+
+```bash
+sudo sed -i 's/deb.debian.org/mirrors.tencent.com/g' /etc/apt/sources.list.d/debian.sources
+sudo sed -i 's/archive.ubuntu.com/mirrors.tencent.com/g' /etc/apt/sources.list
+sudo sed -i 's/security.ubuntu.com/mirrors.tencent.com/g' /etc/apt/sources.list
+sudo apt-get update
+```
+
+### 2.2 Docker 镜像加速
+
+```bash
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": [
+    "https://docker.1ms.run",
+    "https://docker.m.daocloud.io"
+  ]
+}
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+### 2.3 pip 源（清华）
+
+```bash
+mkdir -p ~/.pip
+cat > ~/.pip/pip.conf <<'EOF'
+[global]
+index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+trusted-host = pypi.tuna.tsinghua.edu.cn
+EOF
+```
+
+### 2.4 npm 源（npmmirror）
+
+```bash
+npm config set registry https://registry.npmmirror.com
+```
+
+---
+
+## 3. 安装 Docker
 
 ```bash
 # 卸载旧版本（如果存在）
@@ -41,7 +89,7 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-## 3. 安装 Docker Compose 插件
+## 4. 安装 Docker Compose 插件
 
 ```bash
 sudo apt-get install -y docker-compose-plugin
@@ -57,7 +105,7 @@ docker compose version
 > docker-compose --version
 > ```
 
-## 4. 克隆项目
+## 5. 克隆项目
 
 ```bash
 cd /opt
@@ -65,7 +113,7 @@ git clone https://github.com/xiexingzu-cell/InferMind-AI.git
 cd InferMind-AI
 ```
 
-## 5. 配置环境变量
+## 6. 配置环境变量
 
 ```bash
 # 复制模板
@@ -87,7 +135,7 @@ nano .env.production
 | `DEEPSEEK_API_KEY` | 你的 DeepSeek API Key |
 | `GEMINI_API_KEY` | 你的 Gemini API Key（可选） |
 
-## 6. 启动服务
+## 7. 启动服务
 
 ```bash
 # 确保在项目根目录
@@ -99,7 +147,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d --bui
 
 首次启动会拉取基础镜像并构建应用镜像，约 3—5 分钟。
 
-## 7. 查看服务状态
+## 8. 查看服务状态
 
 ```bash
 # 查看所有容器
@@ -113,7 +161,7 @@ docker compose -f docker-compose.prod.yml ps
 # infermind-redis
 ```
 
-## 8. 查看日志
+## 9. 查看日志
 
 ```bash
 # 查看所有服务日志
@@ -129,7 +177,7 @@ docker compose -f docker-compose.prod.yml logs -f nginx
 docker compose -f docker-compose.prod.yml logs --tail=50
 ```
 
-## 9. 重启服务
+## 10. 重启服务
 
 ```bash
 # 重启所有服务
@@ -139,7 +187,7 @@ docker compose -f docker-compose.prod.yml restart
 docker compose -f docker-compose.prod.yml restart backend
 ```
 
-## 10. 停止服务
+## 11. 停止服务
 
 ```bash
 # 停止但保留数据卷
@@ -149,7 +197,7 @@ docker compose -f docker-compose.prod.yml down
 docker compose -f docker-compose.prod.yml down -v
 ```
 
-## 11. 更新代码并重新部署
+## 12. 更新代码并重新部署
 
 ```bash
 cd /opt/InferMind-AI
@@ -164,7 +212,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d --bui
 docker image prune -f
 ```
 
-## 12. 验证部署
+## 13. 验证部署
 
 ```bash
 # 健康检查
@@ -178,7 +226,7 @@ curl http://localhost/v1/models \
 
 用浏览器访问 `http://你的服务器公网IP` 应该能看到 InferMind 首页。
 
-## 13. 常见问题排查
+## 14. 常见问题排查
 
 ### 后端启动失败
 
