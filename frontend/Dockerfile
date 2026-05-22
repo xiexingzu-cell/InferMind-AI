@@ -15,7 +15,6 @@ RUN npm ci
 
 # Copy source and build
 COPY . .
-RUN mkdir -p public
 RUN npm run build
 
 # Stage 2: Production runtime
@@ -28,7 +27,6 @@ ENV NODE_ENV=production
 # Copy standalone output
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 
