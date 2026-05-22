@@ -2,14 +2,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# System deps for psycopg2 / asyncpg
+# Use Tencent Cloud mirrors (faster in China)
+RUN sed -i 's/deb.debian.org/mirrors.tencent.com/g' /etc/apt/sources.list.d/debian.sources
+
+# System deps for asyncpg
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies (cache layer)
+# Install Python dependencies (Tencent pip mirror)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -i https://mirrors.cloud.tencent.com/pypi/simple -r requirements.txt
 
 # Copy application code
 COPY app/ ./app/
