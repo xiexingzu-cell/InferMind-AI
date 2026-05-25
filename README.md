@@ -1,139 +1,214 @@
 # InferMind
 
-OpenAI-compatible AI aggregation gateway. Route requests to GPT, DeepSeek, and Gemini through a single API endpoint.
+InferMind 是一个面向科研、工程、技术研究与严肃知识工作的 AI 推理工作台。
 
-## Architecture
+它不是通用 AI 聊天平台，也不是普通 AI 聚合站。InferMind 的目标是让 AI 真正参与研究：帮助用户拆解问题、推导方法、建立模型、分析数据、生成技术报告，并逐步沉淀科研与工程工作流。
 
+## 产品定位
+
+InferMind 面向：
+
+- 本科生、研究生、博士生
+- 科研人员、工程师、技术创作者
+- 理工科学生
+- 数学建模与科研竞赛用户
+
+优先支持的任务：
+
+- 论文写作与文献综述
+- 数学推导与建模
+- MATLAB / Python 科学计算
+- COMSOL 建模辅助
+- 实验设计与数据分析
+- 科研绘图与技术报告生成
+- LaTeX 论文生成
+- 科研项目管理
+- 数学建模竞赛
+
+核心理念：
+
+```text
+让 AI 真正参与研究，而不是聊天。
 ```
-Frontend (Next.js / Vercel)
-  → API Gateway (FastAPI / Railway)
-    → Model Router
-      → Provider (OpenAI | DeepSeek | Gemini)
+
+## 当前工程能力
+
+当前版本提供科研工作台的 AI Gateway 底座：
+
+- Next.js 前端工作台
+- FastAPI 后端
+- OpenAI 兼容 API：`/v1/chat/completions`
+- SSE 流式输出
+- Markdown 渲染与代码高亮
+- 多模型 Provider 架构
+- OpenAI / DeepSeek Provider
+- API Key 管理
+- 用量统计
+- PostgreSQL 数据库
+- Redis 限流
+- Nginx 反向代理
+- Docker Compose 单机生产部署
+
+## 架构
+
+```text
+用户浏览器 / OpenAI SDK
+        ↓
+Nginx :80
+        ↓
+├── /        → frontend:3000
+├── /api     → backend:8000
+├── /v1      → backend:8000
+└── /health  → backend:8000/health
 ```
 
-## Local Development
+后端内部：
 
-### Prerequisites
-- Docker Desktop
-- Python 3.11+
-- Node.js 20+
+```text
+FastAPI Gateway
+        ↓
+Auth / Rate Limit
+        ↓
+Model Router
+        ↓
+Provider Registry
+        ↓
+OpenAIProvider / DeepSeekProvider / Future Providers
+```
 
-### 1. Start infrastructure
+## 本地开发
 
-```bash
+### 1. 启动基础设施
+
+```powershell
+cd C:\Users\user\Documents\infermind
 docker compose up -d
 ```
 
-### 2. Backend
+### 2. 启动后端
 
-```bash
-cd backend
+```powershell
+cd C:\Users\user\Documents\infermind\backend
 python -m venv .venv
-.venv\Scripts\activate          # Windows
+.\.venv\Scripts\activate
 pip install -r requirements.txt
-
-cp .env.example .env            # fill in your provider keys
 uvicorn app.main:app --reload
-# → http://localhost:8000/docs
 ```
 
-Create first admin key:
+后端地址：
 
-```bash
+```text
+http://localhost:8000
+```
+
+健康检查：
+
+```text
+http://localhost:8000/health
+```
+
+创建第一个管理员 API Key：
+
+```powershell
 python scripts/seed_key.py --name "admin"
-# Save the printed key — shown only once
 ```
 
-### 3. Frontend
+### 3. 启动前端
 
-```bash
-cd frontend
+```powershell
+cd C:\Users\user\Documents\infermind\frontend
 npm install
-# .env.local is already created (points to localhost:8000)
 npm run dev
-# → http://localhost:3000
 ```
 
-Open http://localhost:3000, enter your admin key in the Chat page.
+前端地址：
 
----
+```text
+http://localhost:3000
+```
 
-## Deploy to Production
+## 生产部署
 
-### Backend → Railway
+当前推荐部署方式：
 
-1. Create a new Railway project
-2. Add **PostgreSQL** plugin — Railway sets `DATABASE_URL` automatically
-3. Add **Redis** plugin — Railway sets `REDIS_URL` automatically
-4. Create a new service, connect your GitHub repo, set root directory to `backend/`
-5. Railway auto-detects `Dockerfile`
-6. Set environment variables (see `backend/.env.production.example`):
+```text
+单台 Ubuntu 服务器 + Docker Compose + Nginx
+```
 
-| Variable | Value |
-|----------|-------|
-| `ENVIRONMENT` | `production` |
-| `SECRET_KEY` | run `python -c "import secrets; print(secrets.token_hex(32))"` |
-| `CORS_ORIGINS` | your Vercel URL, e.g. `https://your-project.vercel.app` |
-| `OPENAI_API_KEY` | `sk-...` |
-| `DEEPSEEK_API_KEY` | `sk-...` |
-| `DATABASE_URL` | auto-set by Railway PostgreSQL plugin |
-| `REDIS_URL` | auto-set by Railway Redis plugin |
-
-7. Deploy — Railway runs the healthcheck at `/health`
-8. Copy the Railway public URL (e.g. `https://your-backend.railway.app`)
-
-### Seed admin key on Railway
+启动命令：
 
 ```bash
-# Run once in Railway's shell or via CLI
-python scripts/seed_key.py --name "admin"
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 ```
 
-Or locally against the Railway DB:
+部署文档：
 
-```bash
-DATABASE_URL="postgresql+asyncpg://..." python scripts/seed_key.py --name "admin"
+```text
+docs/deploy-vps.md
 ```
 
-### Frontend → Vercel
+生产环境变量模板：
 
-1. Import the GitHub repo in Vercel
-2. Set root directory to `frontend/`
-3. Add environment variable:
+```text
+.env.production.example
+```
 
-| Variable | Value |
-|----------|-------|
-| `NEXT_PUBLIC_API_URL` | `https://your-backend.railway.app` |
+真实生产环境变量：
 
-4. Deploy
+```text
+.env.production
+```
 
----
+注意：`.env.production` 包含真实密钥和密码，不能提交到 Git，也不能公开展示。
 
-## API Reference
+## API
 
-The gateway is fully OpenAI SDK compatible. Point `base_url` at your backend:
+OpenAI 兼容接口：
+
+```text
+POST /v1/chat/completions
+GET  /v1/models
+```
+
+管理接口：
+
+```text
+GET    /api/keys
+POST   /api/keys
+DELETE /api/keys/{id}
+GET    /api/usage?days=30
+GET    /health
+```
+
+OpenAI SDK 示例：
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(
     api_key="gw-your-key",
-    base_url="https://your-backend.railway.app/v1",
+    base_url="http://your-server-ip/v1",
 )
 
 response = client.chat.completions.create(
-    model="deepseek-chat",  # or gpt-4o, gpt-4o-mini, ...
-    messages=[{"role": "user", "content": "Hello"}],
+    model="deepseek-chat",
+    messages=[
+        {"role": "system", "content": "你是一个严谨的科研推理助手。"},
+        {"role": "user", "content": "请帮我拆解这个实验设计问题。"},
+    ],
     stream=True,
 )
+
 for chunk in response:
-    print(chunk.choices[0].delta.content, end="")
+    print(chunk.choices[0].delta.content or "", end="")
 ```
 
-### Supported models
+## 支持模型
+
+当前注册模型：
 
 | Model | Provider |
-|-------|----------|
+| --- | --- |
 | `gpt-4o` | OpenAI |
 | `gpt-4o-mini` | OpenAI |
 | `gpt-4-turbo` | OpenAI |
@@ -141,24 +216,30 @@ for chunk in response:
 | `deepseek-chat` | DeepSeek |
 | `deepseek-reasoner` | DeepSeek |
 
-### Endpoints
+## 新增 Provider
 
-```
-POST /v1/chat/completions   OpenAI-compatible chat
-GET  /v1/models             List available models
-GET  /api/keys              List API keys
-POST /api/keys              Create API key
-DEL  /api/keys/{id}         Revoke API key
-GET  /api/usage?days=30     Usage statistics
-GET  /health                Health check
-```
+新增模型供应商的推荐路径：
 
----
+1. 在 `backend/app/providers/` 下创建新的 `<name>_provider.py`。
+2. 继承 `AbstractProvider`。
+3. 实现非流式与流式输出。
+4. 在 `backend/app/providers/registry.py` 注册模型前缀。
+5. 在 `backend/app/config.py` 和 `.env.production.example` 增加必要环境变量。
 
-## Adding a New Provider
+## 未来方向
 
-1. Create `backend/app/providers/<name>_provider.py` implementing `AbstractProvider`
-2. Register model prefixes in `backend/app/providers/registry.py`
-3. Add provider keys to `config.py` and `.env.example`
+InferMind 后续应优先演进为科研与工程工作流平台：
 
-That's it — no other files need touching.
+- 多 Agent 协同
+- 推理过程可视化
+- 项目长期记忆
+- 科研上下文管理
+- 工具链编排
+- 云端计算
+- 科学工作流自动化
+- 文献库与引用管理
+- 数据分析与科学绘图
+- LaTeX / 技术报告生成
+- 数学建模竞赛工作流
+
+InferMind 最终不是“大模型聚合平台”，而是“面向科研与工程的下一代 AI 推理工作台”。

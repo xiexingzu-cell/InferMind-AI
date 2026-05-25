@@ -16,8 +16,8 @@ interface Props {
   metric: "requests" | "tokens"
 }
 
-const TICK_COLOR = "oklch(0.52 0 0)"
-const LINE_COLOR = "oklch(0.75 0 0)"
+const TICK_COLOR = "#9CA3AF"
+const LINE_COLOR = "#38BDF8"
 const GRID_COLOR = "rgba(255,255,255,0.05)"
 
 function formatDate(d: string) {
