@@ -109,9 +109,9 @@ export default function LandingPage() {
           </Badge>
 
           <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight leading-tight">
-            让 AI 真正参与研究
+            专为科研而生的
             <br />
-            <span className="text-muted-foreground">而不是聊天。</span>
+            <span className="text-muted-foreground">AI工具平台</span>
           </h1>
 
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
