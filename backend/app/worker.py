@@ -87,6 +87,7 @@ async def process_job(payload: str) -> None:
             await db.commit()
         except Exception:
             await db.rollback()
+            await db.refresh(project)
             stages = [dict(stage) for stage in project.stages]
             stages[index]["status"] = "failed"
             stages[index]["output"] = "阶段执行失败，请检查模型或 Runner 配置后重试。"

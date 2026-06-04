@@ -28,9 +28,7 @@ def main() -> int:
         )
         return 1
 
-    log_content = (
-        f"exit_code={result.returncode}\n\n## stdout\n{result.stdout}\n\n## stderr\n{result.stderr}",
-    )
+    log_content = f"exit_code={result.returncode}\n\n## stdout\n{result.stdout}\n\n## stderr\n{result.stderr}"
     (output_dir / "runner.log").write_text(log_content, encoding="utf-8")
     results_path = output_dir / "results.md"
     if not results_path.exists():

@@ -90,9 +90,16 @@ def execute_python(code: str, project_dir: Path) -> list[Path]:
         container.start()
         container.put_archive("/workspace", _input_archive(code, project_dir))
         result = container.exec_run(["python", "/runner/run.py"], workdir="/workspace")
-        if result.exit_code != 0:
-            raise RuntimeError("Sandboxed Python execution failed.")
         archive_bits, _ = container.get_archive("/workspace/output")
-        return _extract_outputs(io.BytesIO(b"".join(archive_bits)), project_dir / "runner" / str(uuid4()))
+        output_paths = _extract_outputs(
+            io.BytesIO(b"".join(archive_bits)), project_dir / "runner" / str(uuid4())
+        )
+        if result.exit_code != 0:
+            log_path = next((path for path in output_paths if path.name in {"runner.log", "runner-error.txt"}), None)
+            if log_path is not None:
+                detail = log_path.read_text(encoding="utf-8", errors="replace")[:2000]
+                raise RuntimeError(f"Sandboxed Python execution failed.\n{detail}")
+            raise RuntimeError("Sandboxed Python execution failed.")
+        return output_paths
     finally:
         container.remove(force=True)
