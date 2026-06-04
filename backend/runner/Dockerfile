@@ -8,9 +8,11 @@ RUN sed -i 's/deb.debian.org/mirrors.tencent.com/g' /etc/apt/sources.list.d/debi
         numpy==2.2.2 \
         openpyxl==3.1.5 \
         pandas==2.2.3 \
+        pulp==2.9.0 \
         scikit-learn==1.6.1 \
         scipy==1.15.1 \
-        seaborn==0.13.2
+        seaborn==0.13.2 \
+        ortools==9.12.4544
 
 COPY run.py /runner/run.py
 
