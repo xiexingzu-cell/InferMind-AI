@@ -74,7 +74,9 @@ def execute_python(code: str, project_dir: Path) -> list[Path]:
         settings.competition_runner_image,
         command=["sleep", "300"],
         network_disabled=True,
-        read_only=True,
+        # Keep execution isolated with a tmpfs workspace. Docker rejects
+        # put_archive into a read-only rootfs even when the target is tmpfs.
+        read_only=False,
         user="1001:1001",
         mem_limit="1g",
         nano_cpus=1_000_000_000,
