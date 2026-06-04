@@ -125,14 +125,38 @@ export default function CompetitionProjectPage() {
     }
   }
 
-  async function downloadArtifact(artifactId: string, filename: string) {
+  async function downloadArtifact(artifactId: string, filename: string, mediaType: string) {
     try {
       const blob = await api.competitions.downloadArtifact(projectId, artifactId, projectToken, INTERNAL_KEY)
       const url = URL.createObjectURL(blob)
+      const lower = filename.toLowerCase()
+      const canPreview =
+        mediaType === "application/pdf" ||
+        mediaType.startsWith("image/") ||
+        mediaType.startsWith("text/") ||
+        lower.endsWith(".pdf") ||
+        lower.endsWith(".png") ||
+        lower.endsWith(".jpg") ||
+        lower.endsWith(".jpeg") ||
+        lower.endsWith(".md") ||
+        lower.endsWith(".csv") ||
+        lower.endsWith(".txt")
+
+      if (canPreview) {
+        const opened = window.open(url, "_blank", "noopener,noreferrer")
+        if (opened) {
+          window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+          return
+        }
+      }
+
       const link = document.createElement("a")
       link.href = url
       link.download = filename
+      link.rel = "noopener noreferrer"
+      document.body.appendChild(link)
       link.click()
+      link.remove()
       URL.revokeObjectURL(url)
     } catch (err) {
       setError((err as Error).message)
@@ -228,7 +252,7 @@ export default function CompetitionProjectPage() {
                   <CardContent className="space-y-2">
                     {project.artifacts.length === 0 && <p className="text-xs text-muted-foreground">执行阶段后将在这里生成可下载产物。</p>}
                     {project.artifacts.map((artifact) => (
-                      <button key={artifact.id} type="button" onClick={() => downloadArtifact(artifact.id, artifact.filename)} className="flex w-full gap-2 rounded-md border p-2 text-left text-xs transition-colors hover:border-sky-500/50">
+                      <button key={artifact.id} type="button" onClick={() => downloadArtifact(artifact.id, artifact.filename, artifact.media_type)} className="flex w-full gap-2 rounded-md border p-2 text-left text-xs transition-colors hover:border-sky-500/50">
                         <ArtifactIcon mediaType={artifact.media_type} filename={artifact.filename} />
                         <span className="min-w-0">
                           <span className="block truncate">{artifact.filename}</span>
