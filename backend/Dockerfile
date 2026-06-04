@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM docker.1ms.run/library/python:3.11-slim
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ RUN sed -i 's/deb.debian.org/mirrors.tencent.com/g' /etc/apt/sources.list.d/debi
 
 # System deps for asyncpg
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq-dev gcc \
+    libpq-dev gcc libreoffice-writer fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies (Tsinghua pip mirror)
@@ -18,7 +18,9 @@ RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r re
 COPY app/ ./app/
 
 # Non-root user
-RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
+RUN useradd -m -u 1001 appuser \
+    && mkdir -p /data/competitions \
+    && chown -R appuser:appuser /app /data/competitions
 USER appuser
 
 EXPOSE 8000

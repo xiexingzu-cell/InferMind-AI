@@ -65,3 +65,60 @@ export interface ChatCompletionChunk {
     finish_reason: string | null
   }>
 }
+
+export interface CompetitionStageDefinition {
+  id: string
+  name: string
+  description: string
+}
+
+export interface Competition {
+  id: string
+  name: string
+  short_name: string
+  category: string
+  language: string
+  description: string
+  stages: CompetitionStageDefinition[]
+}
+
+export interface CompetitionStage extends CompetitionStageDefinition {
+  status: "locked" | "ready" | "queued" | "running" | "completed" | "confirmed" | "failed"
+  output: string
+}
+
+export interface CompetitionFile {
+  id: string
+  filename: string
+  media_type: string
+  size_bytes: number
+  safety_status: "parsable" | "stored_only"
+  created_at: string
+}
+
+export interface CompetitionArtifact {
+  id: string
+  stage_id: string
+  filename: string
+  media_type: string
+  size_bytes: number
+  created_at: string
+}
+
+export interface CompetitionProject {
+  id: string
+  competition_id: string
+  title: string
+  problem_statement: string
+  notes: string
+  status: string
+  stages: CompetitionStage[]
+  files: CompetitionFile[]
+  artifacts: CompetitionArtifact[]
+  created_at: string
+  updated_at: string
+}
+
+export interface CompetitionProjectCreated extends CompetitionProject {
+  access_token: string
+}

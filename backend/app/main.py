@@ -8,7 +8,8 @@ from app.config import settings
 from app.core.logger import configure_logging, get_logger
 from app.database import create_tables
 from app.redis_client import close_pool
-from app.api.v1 import chat, models, keys, usage
+from app.api.v1 import chat, competitions, models, keys, usage
+from app import models as _models  # noqa: F401
 
 configure_logging(settings.log_level)
 logger = get_logger(__name__)
@@ -65,6 +66,7 @@ app.include_router(models.router, prefix="/v1", tags=["models"])
 # Mount platform management routes
 app.include_router(keys.router, prefix="/api", tags=["keys"])
 app.include_router(usage.router, prefix="/api", tags=["usage"])
+app.include_router(competitions.router, prefix="/api", tags=["competitions"])
 
 
 @app.get("/health", tags=["system"])

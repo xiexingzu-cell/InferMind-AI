@@ -67,6 +67,12 @@ services:
       - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - RATE_LIMIT_RPM=${RATE_LIMIT_RPM:-60}
+      - COMPETITION_STORAGE_PATH=/data/competitions
+      - COMPETITION_QUEUE_NAME=${COMPETITION_QUEUE_NAME:-competition:jobs}
+      - COMPETITION_MAX_UPLOAD_BYTES=${COMPETITION_MAX_UPLOAD_BYTES:-52428800}
+      - COMPETITION_MODEL=${COMPETITION_MODEL:-deepseek-chat}
+    volumes:
+      - competition_prod_data:/data/competitions
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,9 +88,50 @@ services:
       retries: 5
       start_period: 15s
 
+  # ===================== Competition Worker =====================
+  competition-worker:
+    build:
+      context: ./backend
+    container_name: infermind-competition-worker
+    command: python -m app.worker
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-gw-dev-internal-key}
+      - COMPETITION_STORAGE_PATH=/data/competitions
+      - COMPETITION_QUEUE_NAME=${COMPETITION_QUEUE_NAME:-competition:jobs}
+      - COMPETITION_MAX_UPLOAD_BYTES=${COMPETITION_MAX_UPLOAD_BYTES:-52428800}
+      - COMPETITION_MODEL=${COMPETITION_MODEL:-deepseek-chat}
+      - COMPETITION_RUNNER_IMAGE=${COMPETITION_RUNNER_IMAGE:-infermind-python-runner:latest}
+    volumes:
+      - competition_prod_data:/data/competitions
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "${DOCKER_GID:-999}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - infermind-net
+    restart: unless-stopped
+
+  # Build this private image before starting the worker. It is launched
+  # ephemerally for generated Python tasks and is never exposed by Nginx.
+  competition-runner-image:
+    build:
+      context: ./backend/runner
+    image: infermind-python-runner:latest
+    profiles: ["runner-build"]
+    command: ["true"]
+
   # ===================== PostgreSQL =====================
   postgres:
-    image: postgres:16-alpine
+    image: docker.1ms.run/library/postgres:16-alpine
     container_name: infermind-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -106,7 +153,7 @@ services:
 
   # ===================== Redis =====================
   redis:
-    image: redis:7-alpine
+    image: docker.1ms.run/library/redis:7-alpine
     container_name: infermind-redis
     command: redis-server --appendonly yes
     expose:
@@ -127,6 +174,7 @@ services:
 volumes:
   postgres_prod_data:
   redis_prod_data:
+  competition_prod_data:
 
 # ===================== Network =====================
 networks:

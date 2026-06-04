@@ -1,4 +1,13 @@
-import type { Model, ApiKeyRecord, ChatCompletionRequest, UsageSummary } from "@/types"
+import type {
+  Model,
+  ApiKeyRecord,
+  ChatCompletionRequest,
+  UsageSummary,
+  Competition,
+  CompetitionFile,
+  CompetitionProject,
+  CompetitionProjectCreated,
+} from "@/types"
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? ""
 
@@ -76,4 +85,64 @@ export const api = {
 
   usage: (apiKey: string, days = 30) =>
     request<UsageSummary>(`/api/usage?days=${days}`, apiKey),
+
+  competitions: {
+    list: (apiKey: string) =>
+      request<Competition[]>("/api/competitions", apiKey),
+
+    createProject: (
+      body: { competition_id: string; title: string; problem_statement: string; notes: string },
+      apiKey: string,
+    ) =>
+      request<CompetitionProjectCreated>("/api/competition-projects", apiKey, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    getProject: (projectId: string, projectToken: string, apiKey: string) =>
+      request<CompetitionProject>(`/api/competition-projects/${projectId}`, apiKey, {
+        headers: { "X-Project-Token": projectToken },
+      }),
+
+    uploadFile: async (projectId: string, projectToken: string, file: File, apiKey: string) => {
+      const body = new FormData()
+      body.append("file", file)
+      const res = await fetch(`${BASE_URL}/api/competition-projects/${projectId}/files`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "X-Project-Token": projectToken },
+        body,
+      })
+      if (!res.ok) throw new ApiError(res.status, await errorMessage(res))
+      return res.json() as Promise<CompetitionFile>
+    },
+
+    runStage: (projectId: string, stageId: string, projectToken: string, apiKey: string) =>
+      request(`/api/competition-projects/${projectId}/stages/${stageId}/run`, apiKey, {
+        method: "POST",
+        headers: { "X-Project-Token": projectToken },
+      }),
+
+    confirmStage: (projectId: string, stageId: string, projectToken: string, apiKey: string) =>
+      request(`/api/competition-projects/${projectId}/stages/${stageId}/confirm`, apiKey, {
+        method: "POST",
+        headers: { "X-Project-Token": projectToken },
+      }),
+
+    downloadArtifact: async (projectId: string, artifactId: string, projectToken: string, apiKey: string) => {
+      const res = await fetch(`${BASE_URL}/api/competition-projects/${projectId}/artifacts/${artifactId}/download`, {
+        headers: { Authorization: `Bearer ${apiKey}`, "X-Project-Token": projectToken },
+      })
+      if (!res.ok) throw new ApiError(res.status, await errorMessage(res))
+      return res.blob()
+    },
+  },
+}
+
+async function errorMessage(res: Response): Promise<string> {
+  try {
+    const body = await res.json()
+    return body?.detail ?? body?.error?.message ?? `HTTP ${res.status}`
+  } catch {
+    return `HTTP ${res.status}`
+  }
 }

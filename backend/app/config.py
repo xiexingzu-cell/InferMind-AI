@@ -48,6 +48,13 @@ class Settings(BaseSettings):
     # Rate limiting (requests per minute per API key)
     rate_limit_rpm: int = 60
 
+    # Competition workspace
+    competition_storage_path: str = "./data/competitions"
+    competition_queue_name: str = "competition:jobs"
+    competition_max_upload_bytes: int = 50 * 1024 * 1024
+    competition_model: str = "deepseek-chat"
+    competition_runner_image: str = "infermind-python-runner:latest"
+
     @property
     def is_production(self) -> bool:
         return self.environment == "production"

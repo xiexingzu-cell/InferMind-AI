@@ -134,6 +134,7 @@ nano .env.production
 | `OPENAI_API_KEY` | 你的 OpenAI API Key |
 | `DEEPSEEK_API_KEY` | 你的 DeepSeek API Key |
 | `GEMINI_API_KEY` | 你的 Gemini API Key（可选） |
+| `DOCKER_GID` | 运行 `stat -c '%g' /var/run/docker.sock` 获取，供竞赛 Worker 以非 root 用户启动私有 Runner |
 
 ## 7. 启动服务
 
@@ -141,11 +142,16 @@ nano .env.production
 # 确保在项目根目录
 cd /opt/InferMind-AI
 
+# 首次部署或科学计算依赖更新后，先构建私有 Python Runner 镜像
+docker compose -f docker-compose.prod.yml --env-file .env.production --profile runner-build build competition-runner-image
+
 # 启动所有服务（构建镜像 + 后台运行）
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 ```
 
 首次启动会拉取基础镜像并构建应用镜像，约 3—5 分钟。
+
+`competition-worker` 会通过 Docker Socket 启动临时 Runner 容器。Runner 默认断网、限制 CPU、内存和进程数，并使用临时工作目录。不要将 Docker Socket 挂载到 Nginx、前端或 API 容器。
 
 ## 8. 查看服务状态
 
@@ -153,10 +159,11 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d --bui
 # 查看所有容器
 docker compose -f docker-compose.prod.yml ps
 
-# 正常应该看到 5 个服务都是 Up 状态:
+# 正常应该看到 6 个服务都是 Up 状态:
 # infermind-nginx
 # infermind-frontend
 # infermind-backend
+# infermind-competition-worker
 # infermind-postgres
 # infermind-redis
 ```

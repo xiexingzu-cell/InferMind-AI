@@ -2,11 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Terminal, MessageSquare, KeyRound, LayoutDashboard } from "lucide-react"
+import { Terminal, MessageSquare, KeyRound, LayoutDashboard, Trophy } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
   { href: "/chat", icon: MessageSquare, label: "对话" },
+  { href: "/competitions", icon: Trophy, label: "竞赛工作台" },
   { href: "/dashboard", icon: LayoutDashboard, label: "仪表盘" },
   { href: "/keys", icon: KeyRound, label: "API Keys" },
 ]
