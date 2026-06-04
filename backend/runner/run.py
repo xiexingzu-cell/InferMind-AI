@@ -28,6 +28,7 @@ def main() -> int:
             timeout=90,
         )
     except subprocess.TimeoutExpired:
+        output_dir = ensure_output_dirs(workspace)
         (output_dir / "runner-error.txt").write_text(
             "Python execution exceeded the 90 second limit.", encoding="utf-8"
         )
@@ -41,12 +42,12 @@ def main() -> int:
     results_path = output_dir / "results.md"
     if not results_path.exists():
         results_path.write_text(
-            "# Python 数据分析运行摘要\n\n"
-            f"退出码：{result.returncode}\n\n"
-            "## 标准输出\n\n"
-            f"```\n{result.stdout or '无'}\n```\n\n"
-            "## 错误输出\n\n"
-            f"```\n{result.stderr or '无'}\n```\n",
+            "# Python Analysis Run Summary\n\n"
+            f"Exit code: {result.returncode}\n\n"
+            "## Standard Output\n\n"
+            f"```\n{result.stdout or 'None'}\n```\n\n"
+            "## Standard Error\n\n"
+            f"```\n{result.stderr or 'None'}\n```\n",
             encoding="utf-8",
         )
     return result.returncode
