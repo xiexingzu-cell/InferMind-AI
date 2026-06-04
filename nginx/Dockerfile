@@ -1,4 +1,4 @@
-FROM docker.1ms.run/library/nginx:alpine
+FROM nginx:1.27-alpine
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 

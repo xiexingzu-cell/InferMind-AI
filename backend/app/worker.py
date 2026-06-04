@@ -106,7 +106,9 @@ async def run_worker() -> None:
             continue
         _, payload = item
         try:
-            await process_job(payload.decode("utf-8"))
+            if isinstance(payload, bytes):
+                payload = payload.decode("utf-8")
+            await process_job(payload)
         except Exception as exc:
             logger.exception("competition job failed", exc=str(exc))
 

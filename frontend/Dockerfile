@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM docker.1ms.run/library/node:20-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Production runtime
-FROM docker.1ms.run/library/node:20-alpine AS runner
+FROM node:20-alpine AS runner
 
 # Tsinghua Alpine mirror
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
