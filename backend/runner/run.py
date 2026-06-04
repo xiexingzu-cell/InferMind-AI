@@ -3,13 +3,18 @@ import subprocess
 import sys
 
 
-def main() -> int:
-    workspace = Path("/workspace")
-    script = workspace / "task.py"
+def ensure_output_dirs(workspace: Path) -> Path:
     output_dir = workspace / "output"
     output_dir.mkdir(exist_ok=True)
     (output_dir / "tables").mkdir(exist_ok=True)
     (output_dir / "figures").mkdir(exist_ok=True)
+    return output_dir
+
+
+def main() -> int:
+    workspace = Path("/workspace")
+    script = workspace / "task.py"
+    output_dir = ensure_output_dirs(workspace)
     if not script.is_file():
         (output_dir / "runner-error.txt").write_text("task.py is missing.", encoding="utf-8")
         return 1
@@ -28,6 +33,9 @@ def main() -> int:
         )
         return 1
 
+    # Generated code may remove or replace output/. Recreate the contract
+    # directories before collecting logs and artifacts.
+    output_dir = ensure_output_dirs(workspace)
     log_content = f"exit_code={result.returncode}\n\n## stdout\n{result.stdout}\n\n## stderr\n{result.stderr}"
     (output_dir / "runner.log").write_text(log_content, encoding="utf-8")
     results_path = output_dir / "results.md"
